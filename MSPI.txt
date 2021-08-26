@@ -1,0 +1,76 @@
+//chip select pull low
+cs_L(UINT8 DATA) {
+	0x55<-0x56;
+	0x57<-DATA;
+	0x55<-0x5a;
+	0x56-> RD;	//dummy
+	0x56-> RD;
+	while(RD & 0x10 != 0x10) {
+        0x56-> RD;
+    }
+}
+
+//chip select pull high
+cs_H() {
+	0x55<-0x56;
+	0x57<-0x80;
+}
+
+
+//write #N data
+WT_NDATA(int N) {
+	cs_L(UINT8 0xc4);
+	while(N > 0) {
+		0x55<-0x59;
+		0x57<-DATA;  //INPUT DATA/CMD
+		0x55<-0x5a;
+		0x56-> RD;	//dummy
+		0x56-> RD;
+		while(RD & 0x08 != 0x08) {
+            0x56-> RD;
+        }
+		0x55<-0x5b;
+		0x56-> RD;	//dummy
+		0x56-> RD;	//discard data
+		N--;
+	}
+	cs_H()
+}
+
+//write #Nw data, read #Nr data back  
+RD_NDATA(int Nw, int Nr) {
+	cs_L(UINT8 0xc0);
+	while(Nw > 0) {
+		0x55<-0x59;
+		0x57<-DATA;     //INPUT CMD
+		0x55<-0x5a;
+		0x56-> RD;		//dummy
+		0x56-> RD;
+		while(RD & 0x08 != 0x08) {
+            0x56-> RD;
+        }
+		0x55<-0x5b;
+		0x56-> RD;	//dummy
+		0x56-> RD;	//discard data
+		Nw--
+	}
+
+	while (Nr > 0){
+        0x55<-0x59;
+        0x57<-0x0;      
+        0x55<-0x5a;
+        0x56-> RD;	//dummy
+        0x56-> RD;
+        while(RD & 0x08 != 0x08) {
+            0x56-> RD;
+        }
+        0x55<-0x5b;
+        0x56-> RD;	//dummy
+        0x56-> RD;	//OUTPUT Data
+        Nr--;
+   }
+	cs_H()
+}
+
+
+
